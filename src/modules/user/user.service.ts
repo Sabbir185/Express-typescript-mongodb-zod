@@ -7,7 +7,9 @@ const createUserIntoDB = async (user: TUser) => {
     return newUser.toObject();
 };
 
-const updateUserIntoDB = async (user: object) => {
+const updateUserIntoDB = async (userId: number, userData: TUser) => {
+    const updatedUser = await User.findOneAndUpdate({userId}, {$set: {...userData}}, {new: true}).select({password: 0, _id: 0, __v: 0, orders: 0})
+    return updatedUser;
 };
 
 const getAllUserFromDB = async () => {
@@ -19,7 +21,13 @@ const getSingleUserFromDB = async (userId: number) => {
     return await User.isUserExists(userId)
 };
 
-const deleteUserFromDB = async (id: string) => {
+const checkUserExistsOrNotFromDB = async (userId: number) => {
+    return await User.isUserExists(userId);
+}
+
+const deleteUserFromDB = async (userId: number) => {
+    const result = await User.deleteOne({userId});
+    return result;
 };
 
 export const UserServices = {
@@ -28,4 +36,5 @@ export const UserServices = {
     getSingleUserFromDB,
     deleteUserFromDB,
     updateUserIntoDB,
+    checkUserExistsOrNotFromDB
 };
