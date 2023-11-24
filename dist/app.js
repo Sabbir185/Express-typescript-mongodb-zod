@@ -19,7 +19,7 @@ app.use(function (req, res, next) {
 });
 app.use((0, cors_1.default)());
 // API routes
-app.use('/api/v1', routes_1.default);
+app.use('/api', routes_1.default);
 // general response
 app.get('/', (req, res) => {
     return res.status(200).json({ error: false, msg: 'Welcome!' });
@@ -33,10 +33,14 @@ app.use((error, req, res, next) => {
     if (error instanceof Error) {
         console.error(error.stack);
         console.error(error.message);
-        return res.status(500).json({ error: true, msg: 'Internal Server Error' });
+        return res
+            .status(500)
+            .json({ error: true, msg: 'Internal Server Error' });
     }
     else {
-        return res.status(500).json({ error: true, msg: 'Something went wrong' });
+        return res
+            .status(500)
+            .json({ error: true, msg: 'Something went wrong' });
     }
     next();
 });

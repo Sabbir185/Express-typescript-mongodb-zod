@@ -25,7 +25,7 @@ const createUser = async (req: Request, res: Response) => {
                 message: 'Server side error',
                 error: {
                     code: 400,
-                    description: error?.issues[0]?.message
+                    description: JSON.stringify(error?.issues[0])
                 },
             });
         } else if (error?.code === 11000) {
@@ -66,22 +66,44 @@ const updateUser = async (req: Request, res: Response) => {
                 }
             });
         }
-        // updating the user information
-        const result = await UserServices.updateUserIntoDB(Number(userId), body);
+        // data validation and updating the user information
+        const zodParsedData = userValidationSchema.parse(body);
+        const result = await UserServices.updateUserIntoDB(Number(userId), zodParsedData);
         return res.status(200).json({
             success: true,
             message: "User updated successfully!",
             data: result,
         });
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: 'Server side error',
-            error: {
-                code: 500,
-                description: 'Server side error',
-            },
-        });
+
+    } catch (error: any) {
+        if (error?.name === 'ZodError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Server side error',
+                error: {
+                    code: 400,
+                    description: JSON.stringify(error?.issues[0])
+                },
+            });
+        } else if (error?.code === 11000) {
+            return res.status(400).json({
+                success: false,
+                message: 'Bad request, user already exists!',
+                error: {
+                    code: 11000,
+                    description: `Duplicate field found, ${Object.keys(error?.keyValue)[0]} - ${error?.keyValue[Object.keys(error?.keyValue)[0]]}`
+                },
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                message: 'Server side error',
+                error: {
+                    code: 500,
+                    description: 'Server side error',
+                },
+            });
+        }
     }
 };
 
