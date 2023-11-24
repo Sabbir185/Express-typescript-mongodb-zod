@@ -18,7 +18,6 @@ const createUser = async (req: Request, res: Response) => {
                 orders: undefined
             },
         });
-
     } catch (error: any) {
         if (error?.name === 'ZodError') {
             return res.status(400).json({
@@ -224,7 +223,6 @@ const addProductInOrder = async (req: Request, res: Response) => {
                 data: null
             });
         }
-
     } catch (error: any) {
         if (error?.name === 'ZodError') {
             return res.status(400).json({
@@ -305,7 +303,6 @@ const totalPriceForSpecificUser = async (req: Request, res: Response) => {
             data: result,
         });
     } catch (error) {
-        console.log({error})
         return res.status(500).json({
             success: false,
             message: 'Server side error',

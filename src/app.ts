@@ -48,8 +48,8 @@ app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
             .status(500)
             .json({ error: true, msg: 'Something went wrong' });
     }
-
     next();
 });
+
 
 export default app;
