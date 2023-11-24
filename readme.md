@@ -24,6 +24,8 @@ yarn lint:fix
 ```
 
 ### API live server link
+- https://sabbir185.appstick.com.bd/
+- Or
 - https://l2-b2-assignment2-iota.vercel.app/
 
 ### API documentation
