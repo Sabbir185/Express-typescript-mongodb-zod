@@ -1,6 +1,6 @@
 import {UserServices} from './user.service';
 import {Request, Response} from 'express';
-import {userValidationSchema} from './user.validation';
+import {ordersValidationSchema, userValidationSchema} from './user.validation';
 
 const createUser = async (req: Request, res: Response) => {
     try {
@@ -67,7 +67,6 @@ const updateUser = async (req: Request, res: Response) => {
                 }
             });
         }
-
         // updating the user information
         const result = await UserServices.updateUserIntoDB(Number(userId), body);
         return res.status(200).json({
@@ -90,7 +89,7 @@ const updateUser = async (req: Request, res: Response) => {
 const getAllUsers = async (req: Request, res: Response) => {
     try {
         const result = await UserServices.getAllUserFromDB();
-        if(result?.length === 0) {
+        if (result?.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "User not found",
@@ -165,17 +164,17 @@ const deleteUser = async (req: Request, res: Response) => {
         }
         // user delete from database
         const result = await UserServices.deleteUserFromDB(Number(userId));
-        if(result?.deletedCount >= 1 && result?.acknowledged === true) {
+        if (result?.deletedCount >= 1 && result?.acknowledged === true) {
             return res.status(200).json({
                 success: true,
                 message: "User deleted successfully!",
-                data : null
+                data: null
             });
         } else {
             return res.status(400).json({
                 success: false,
                 message: "Failed! please try again",
-                data : null
+                data: null
             });
         }
     } catch (error) {
@@ -190,10 +189,142 @@ const deleteUser = async (req: Request, res: Response) => {
     }
 };
 
+// Product order
+const addProductInOrder = async (req: Request, res: Response) => {
+    try {
+        const {body} = req;
+        const {userId} = req.params;
+        // user checking from database by using static method
+        const isUserExists = await UserServices.checkUserExistsOrNotFromDB(Number(userId));
+        if (!isUserExists) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+                error: {
+                    code: 404,
+                    description: "User not found!"
+                }
+            });
+        }
+
+        // order data validation and after that, append product into orders
+        const parsedOrderData = ordersValidationSchema.parse(body)
+        const result = await UserServices.addProductInOrderIntoDB(Number(userId), parsedOrderData);
+
+        if (result?.modifiedCount >= 1 && result?.acknowledged === true) {
+            return res.status(200).json({
+                success: true,
+                message: "Order created successfully!",
+                data: null
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: "Failed! please try again",
+                data: null
+            });
+        }
+
+    } catch (error: any) {
+        if (error?.name === 'ZodError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid order information',
+                error: {
+                    code: 400,
+                    description: error?.issues[0]?.message
+                },
+            });
+        } else {
+            return res.status(500).json({
+                success: false,
+                message: 'Server side error',
+                error: {
+                    code: 500,
+                    description: 'Server side error',
+                },
+            });
+        }
+    }
+};
+
+const getAllOrdersForSpecificUser = async (req: Request, res: Response) => {
+    try {
+        const {userId} = req.params;
+        // user checking from database by using static method
+        const isUserExists = await UserServices.checkUserExistsOrNotFromDB(Number(userId));
+        if (!isUserExists) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+                error: {
+                    code: 404,
+                    description: "User not found!"
+                }
+            });
+        }
+        // get users order information
+        const result = await UserServices.getAllOrdersForSpecificUserFromDB(Number(userId));
+        return res.status(200).json({
+            success: true,
+            message: "Order fetched successfully!",
+            data: result,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Server side error',
+            error: {
+                code: 500,
+                description: 'Server side error',
+            },
+        });
+    }
+};
+
+const totalPriceForSpecificUser = async (req: Request, res: Response) => {
+    try {
+        const {userId} = req.params;
+        // user checking from database by using static method
+        const isUserExists = await UserServices.checkUserExistsOrNotFromDB(Number(userId));
+        if (!isUserExists) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found",
+                error: {
+                    code: 404,
+                    description: "User not found!"
+                }
+            });
+        }
+        // get total price of user
+        const result = await UserServices.totalPriceForSpecificUser(Number(userId));
+        return res.status(200).json({
+            success: true,
+            message: "Total price calculated successfully!",
+            data: result,
+        });
+    } catch (error) {
+        console.log({error})
+        return res.status(500).json({
+            success: false,
+            message: 'Server side error',
+            error: {
+                code: 500,
+                description: 'Server side error',
+            },
+        });
+    }
+};
+
+
 export const UserController = {
     createUser,
     getAllUsers,
     getSingleUser,
     deleteUser,
     updateUser,
+    addProductInOrder,
+    getAllOrdersForSpecificUser,
+    totalPriceForSpecificUser
 };

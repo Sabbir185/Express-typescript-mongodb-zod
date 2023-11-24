@@ -1,5 +1,5 @@
 import {User} from '../user.model';
-import {TUser} from './user.interface';
+import {TUser, TUserOrders} from './user.interface';
 import bcrypt from "bcrypt";
 import config from "../../config";
 
@@ -14,7 +14,12 @@ const updateUserIntoDB = async (userId: number, userData: TUser) => {
     // if user send password, then password will be updated
     const hashPassword = userData?.password && await bcrypt.hash(userData.password, Number(config.bcrypt_salt_rounds));
 
-    const updatedUser = await User.findOneAndUpdate({userId}, {$set: {...userData, password: hashPassword}}, {new: true}).select({password: 0, _id: 0, __v: 0, orders: 0})
+    const updatedUser = await User.findOneAndUpdate({userId}, {
+        $set: {
+            ...userData,
+            password: hashPassword
+        }
+    }, {new: true}).select({password: 0, _id: 0, __v: 0, orders: 0})
     return updatedUser;
 };
 
@@ -40,6 +45,50 @@ const deleteUserFromDB = async (userId: number) => {
     return result;
 };
 
+const addProductInOrderIntoDB = async (userId: number, product: TUserOrders) => {
+    const result = await User.updateOne({userId}, {$push: {orders: product}});
+    return result;
+};
+
+const getAllOrdersForSpecificUserFromDB = async (userId: number) => {
+    const result = await User.aggregate([
+        {
+            $match: {userId},
+        },
+        {
+            $project: {
+                orders: 1,
+                _id: 0,
+            }
+        }
+    ])
+    return result[0];
+};
+
+const totalPriceForSpecificUser = async (userId: number) => {
+    const result = await User.aggregate([
+        {
+            $match: {userId},
+        },
+        { $unwind: {path: '$orders', preserveNullAndEmptyArrays: true}},
+        {
+            $group: {
+                _id: "$_id",
+                totalPrice: {$sum: {$multiply: ["$orders.price", "$orders.quantity"]}},
+            }
+        },
+        {
+            $project: {
+                totalPrice: {$ifNull: ["$totalPrice", 0]},
+                _id: 0,
+            }
+        }
+    ])
+    return {
+        totalPrice: result?.length > 0 ? result[0]?.totalPrice : 0
+    };
+};
+
 
 export const UserServices = {
     createUserIntoDB,
@@ -47,5 +96,8 @@ export const UserServices = {
     getSingleUserFromDB,
     deleteUserFromDB,
     updateUserIntoDB,
-    checkUserExistsOrNotFromDB
+    checkUserExistsOrNotFromDB,
+    addProductInOrderIntoDB,
+    getAllOrdersForSpecificUserFromDB,
+    totalPriceForSpecificUser
 };
