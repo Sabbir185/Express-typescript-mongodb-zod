@@ -22,3 +22,9 @@ yarn prettier:fix
 ```
 yarn lint:fix
 ```
+
+### API live server link
+- https://l2-b2-assignment2-iota.vercel.app/
+
+### API documentation
+- https://documenter.getpostman.com/view/21989502/2s9YeD7Xnz
